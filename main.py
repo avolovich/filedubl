@@ -29,9 +29,9 @@ class fileProps:
     # fullpath = ""
 
 class dirProps:
-    def __init__(self,filename,filesize,dirs):
+    def __init__(self,filename,size,dirs):
         self.filename=filename
-        self.filesize=filesize
+        self.size=size
         self.dirs = dirs
     # filename = ""
     # filesize = 0
@@ -95,7 +95,7 @@ if __name__ == "__main__":
                 # The path variable gets updated for each subfolder
                 dir = os.path.abspath(path)
                 fullpath = os.path.join(dir, each_file)
-                # If there are more files with same checksum append to list
+                # If there are more files with same id append to list
                 filesize_dict[generate_filename_with_filesize(fullpath)].append(fileProps(each_file,get_file_size(fullpath),dir))
 
     # folders_dic (folder, [folderProps]) is a dictionary which match each folder to a collection of files which were found as a dublicates in previous step
@@ -107,15 +107,20 @@ if __name__ == "__main__":
     for value in filesize_dict.values():
         if len(value) > 1:
             for item in value:
-                abspath = item.rsplit("\\",1)[0]
-                filename = item.rsplit("\\",1)[1]
-                folders_dic[abspath].append(filename)
+                dir = item.dir
+                filename=item.filename
+                size=item.size
+                dirs_obj=value.copy()
+                dirs_obj.remove(item)
+                dirs=list()
+                for each_dir in dirs_obj: dirs.append(each_dir.dir)
+                folders_dic[dir].append(dirProps(filename,size,dirs))
                 # Should append not only filename but [(Filename,Filesize,[List of other folders])]  List of other folders=value.exclude(item)
                 # So every folder will have info on dublicate files (with sizes). Each dubplicate file will have info in which folders it also located
                 # By multiplying filesize on the the length of list of othe folders list = possible free space to get after removing duplicates
                 # SUM all such multiplies and you get total space occupied by dublicates.
 
-
+    input()
 
     with open("duplicates.csv", "w") as log:
         # Lineterminator added for windows as it inserts blank rows otherwise
@@ -129,6 +134,7 @@ if __name__ == "__main__":
             percent_of_duplicates = str(
                 "{:,.2f}".format(len(folders_dic[key]) * 100 / number_of_files_in_a_folder(key))) + "%"
             row = ["%s -> %s of dublicates: %d from %d files in a folder" % (key,percent_of_duplicates,len(folders_dic[key]),number_of_files_in_a_folder(key))]
+            row2 = [""]
             #row = key," -> ",percent_of_duplicates," of Duplicates: ",str(len(folders_dic[key]))," from ",str(number_of_files_in_a_folder(key))," files in a folder"
             #row = " ".join([key,"->",percent_of_duplicates,"of Duplicates:",str(len(folders_dic[key])),"from",str(number_of_files_in_a_folder(key)),"files in a folder"])
             print(row)
